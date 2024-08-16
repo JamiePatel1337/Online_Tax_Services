@@ -329,7 +329,7 @@ class OnlineTaxServices():
 
         #version control!
         c_ver.update({"APP_NAME": "Ronin_Customs_Internal_VAT"})
-        c_ver.update({"APP_VERSION": "0.0.7"})
+        c_ver.update({"APP_VERSION": "0.0.8"})
 
         #app info
         id = str(input("Enter HMRC Client ID: "))
@@ -634,7 +634,7 @@ class OnlineTaxServices():
             self.SaveConfig()
             return 0
 
-    def VerifyVatNumber(self, no) -> int:
+    def SanitiseVatNumber(self, no) -> int:
         try:
             vat_no = int(no)
             if vat_no < 0 or vat_no > 999999999:
@@ -651,6 +651,13 @@ class OnlineTaxServices():
         self.headers.update({"Accept": "application/vnd.hmrc.2.0+json"})
         self.headers.update({"Authorization": f"Bearer {self.config['LOGIN_INFO']['ACCESS']}"})
         self.response = requests.get(f"{self.config['APP_CONFIG']['BASE_URL']}organisations/vat/check-vat-number/lookup/{vat_no}", headers=self.headers)
+        return self.response.json()
+
+    def VerifyVatNumber(self, vat_no):
+        self.PopulateHeaders()
+        self.headers.update({"Accept": "application/vnd.hmrc.2.0+json"})
+        self.headers.update({"Authorization": f"Bearer {self.config['LOGIN_INFO']['ACCESS']}"})
+        self.response = requests.get(f"{self.config['APP_CONFIG']['BASE_URL']}organisations/vat/check-vat-number/lookup/{vat_no}/{self.config['DATABASE_INFO'][self.client_index]['VAT_NO']}", headers=self.headers)
         return self.response.json()
 
     def PrintObligations(self, obs, quiet):
@@ -823,6 +830,7 @@ class OnlineTaxServices():
 
     def ShellHelp(self) -> int:
         print(f"check - check details of a GB VAT number")
+        print(f"verify - verified search of a GB VAT number")
         print(f"list - list all client info")
         print(f"create - create new client")
         print(f"select - select client by ID")
@@ -835,10 +843,10 @@ class OnlineTaxServices():
         print(f"exit/quit - exit the program")
         return 0
 
-    def ShellCheck(self):
+    def ShellCheck(self) -> int:
         vat_no = input('Enter VAT number: ')
         try:
-            if(self.VerifyVatNumber(vat_no) < 0):
+            if(self.SanitiseVatNumber(vat_no) < 0):
                 return -1
             self.response = self.CheckVatNumber(vat_no)
             print(f"{self.response['target']['name']} - {self.response['target']['address']['line1']}, {self.response['target']['address']['postcode']}")
@@ -849,7 +857,28 @@ class OnlineTaxServices():
             else:
                 print('VAT number not found!')
             return -1
-        
+
+    def ShellVerify(self) -> int:
+        if self.active_client == '' or self.client_index == None:
+            print('No client selected!')
+            return -1
+        vat_no = input('Enter VAT number: ')
+        try:
+            if(self.SanitiseVatNumber(vat_no) < 0):
+                return -1
+            self.response = self.VerifyVatNumber(vat_no)
+            print(f"{self.response['target']['name']} - {self.response['target']['address']['line1']}, {self.response['target']['address']['postcode']}")
+            print(f"Requester VAT no. {self.response['requester']}")
+            print(f"Reference: {self.response['consultationNumber']}")
+            print(f"Timestamp: {self.response['processingDate']}")
+            return 0
+        except Exception:
+            if self.response == None:
+                print('Invalid client token!')
+            else:
+                print('VAT number not found!')
+            return -1
+
     def ShellList(self) -> int:
         cl = self.config['DATABASE_INFO']
         if len(cl) == 0:
@@ -886,7 +915,7 @@ class OnlineTaxServices():
                     print('Client ID already exists!')
                     return -1
         vat_no = input('Enter VAT number: ')
-        no = self.VerifyVatNumber(vat_no)
+        no = self.SanitiseVatNumber(vat_no)
         if no < 0:
             return -1
         try:
@@ -1112,6 +1141,8 @@ class OnlineTaxServices():
                         self.ShellHelp()
                     elif cmd == 'check':
                         self.ShellCheck()
+                    elif cmd == 'verify':
+                        self.ShellVerify()
                     elif cmd == 'list':
                         self.ShellList()
                     elif cmd == 'create':

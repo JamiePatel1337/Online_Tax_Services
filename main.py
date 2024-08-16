@@ -1,4 +1,3 @@
-#!/home/mint/Documents/ROC_MTD/Dev/python/Online_Tax_Services/V0-0-7/.venv/bin/python3
 
 ''' 
     Online_Tax_Services - HMRC VAT MTD Python wrapper

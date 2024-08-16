@@ -1,17 +1,11 @@
 
- > Changelog [V0-0-7]:
+ > Changelog [V0-0-8]:
 
- - updated check VAT no. call for application restricted instead of open access
- - new config field ['LOGIN_INFO']['ACCESS'] for access token
- - updated CheckVatNumber with bearer token header
- - added v2.0 accept header
- - added RequestClientToken for client_credentials OAuth2 flow
- - updated CheckOtp with call to RequestClientToken on login
- - added logout after timeout feature
- - new config ['APP_CONFIG']['TIMEOUT'] in seconds
- - new class property activity_timer
- - new class methods StartTimer and CheckTimeout
- - tested on Linux Mint (Ubuntu) 21.1 - Mate desktop
+ - added v2.0 verified VAT no. check
+ - new UI function ShellVerify
+ - updated help info and UI calls
+ - new helper function VerifyVatNumber
+ - tested on Linux Mint (Ubuntu) 20.3 - Mate desktop, kernel 5.15.0-113-generic
 
  > Install pre-requisites:
 
